@@ -9,17 +9,23 @@ dotenv.config();
 connectDB();
 
 const app = express();
-
 app.use(express.json());
 
 async function startServer() {
-    const server = new ApolloServer({ typeDefs, resolvers });
+    const server = new ApolloServer({
+        typeDefs,
+        resolvers,
+        context: ({ req }) => ({ req })
+    });
+
     await server.start();
     server.applyMiddleware({ app });
 
-    app.listen(process.env.PORT || 5000, () => {
-        console.log(`🚀 Server running on port ${process.env.PORT}`);
-        console.log(`🚀 GraphQL playground available at http://localhost:${process.env.PORT}/graphql`);
+    const PORT = process.env.PORT || 5000;
+    app.listen(PORT, () => {
+        console.log(`🚀 Server running on port ${PORT}`);
+        console.log(`🚀 GraphQL playground available at http://localhost:${PORT}/graphql`);
     });
 }
+
 startServer();

@@ -2,6 +2,8 @@ const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
 const User = require("../models/User");
 const Employee = require("../models/Employee");
+const authMiddleware = require("../middleware/authMiddleware");
+
 
 const resolvers = {
     Query: {
@@ -96,9 +98,12 @@ const resolvers = {
         },
 
         // Create Employee Mutation
-        addEmployee: async (_, { input }) => {
+        addEmployee: async (_, { input }, context) => {
+            const user = authMiddleware(context);
+            if (!user) throw new Error("Unauthorized: You must be logged in.");
+
             try {
-                const newEmployee = new Employee(input);  // ✅ Matches schema
+                const newEmployee = new Employee(input);
                 await newEmployee.save();
                 return newEmployee;
             } catch (error) {
@@ -107,9 +112,12 @@ const resolvers = {
         },
 
         // Update Employee Mutation
-        updateEmployee: async (_, { eid, input }) => {
+        updateEmployee: async (_, { eid, input }, context) => {
+            const user = authMiddleware(context);
+            if (!user) throw new Error("Unauthorized: You must be logged in.");
+
             try {
-                const updatedEmployee = await Employee.findByIdAndUpdate(eid, { $set: input }, { new: true });
+                const updatedEmployee = await Employee.findByIdAndUpdate(eid, input, { new: true });
                 return updatedEmployee;
             } catch (error) {
                 throw new Error("Error updating employee: " + error.message);
@@ -117,7 +125,10 @@ const resolvers = {
         },
 
         // Delete Employee Mutation
-        deleteEmployee: async (_, { eid }) => {
+        deleteEmployee: async (_, { eid }, context) => {
+            const user = authMiddleware(context);
+            if (!user) throw new Error("Unauthorized: You must be logged in.");
+
             try {
                 await Employee.findByIdAndDelete(eid);
                 return "Employee deleted successfully.";
